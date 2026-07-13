@@ -1,0 +1,13 @@
+# Fichiers temporaires MATLAB
+*.asv
+*.m~
+*.mex*
+*.slxc
+slprj/
+*.autosave
+
+# Données lourdes
+*.mat
+
+# Simulink générés
+codegen/
