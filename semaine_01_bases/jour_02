@@ -1,0 +1,83 @@
+close all
+clear all
+
+
+
+% Simuler un log de 60s à 100Hz
+fs      = 100;                          % fréquence échantillonnage (Hz)
+t       = 0 : 1/fs : 60;               % vecteur temps
+N       = length(t);
+
+% Vitesse (km/h) — accélération puis virage puis freinage
+v_raw   = 80 * sin(t/10).^2 + 5 * randn(1,N);  % signal bruité
+
+% Accélération latérale (g) — virage
+ay_raw  = 1.2 * sin(t/8) + 0.1 * randn(1,N);
+
+% Angle volant (deg)
+steer   = 30 * sin(t/8) + 2 * randn(1,N);
+
+% RPM
+rpm_raw = 8000 * abs(sin(t/10)) + 500 * randn(1,N);
+
+fprintf('Données simulées générées : %d points à %d Hz\n', N, fs);
+
+% ---------------------------------------------------------
+%  PARTIE B — FILTRAGE
+% ---------------------------------------------------------
+
+% Filtre passe-bas à 10Hz pour enlever le bruit
+fc      = 10;                           % fréquence de coupure (Hz)
+v_filt  = lowpass(v_raw, fc, fs);
+ay_filt = lowpass(ay_raw, fc, fs);
+rpm_filt= lowpass(rpm_raw, fc, fs);
+
+fprintf('Filtrage passe-bas appliqué (fc = %d Hz)\n', fc);
+
+% ---------------------------------------------------------
+%  PARTIE C — STATISTIQUES
+% ---------------------------------------------------------
+
+fprintf('\n--- Statistiques session ---\n');
+fprintf('Vitesse max     : %.1f km/h\n', max(v_filt));
+fprintf('Vitesse moyenne : %.1f km/h\n', mean(v_filt));
+fprintf('Ay max          : %.2f g\n',    max(abs(ay_filt)));
+fprintf('RPM max         : %.0f tr/min\n', max(rpm_filt));
+
+% ---------------------------------------------------------
+%  PARTIE D — GRAPHES
+% ---------------------------------------------------------
+
+figure('Name', 'Jour 2 — Analyse log simulé', 'NumberTitle', 'off');
+
+% Vitesse brute vs filtrée
+subplot(3,1,1);
+plot(t, v_raw,  'Color', [0.8 0.8 0.8], 'LineWidth', 0.5);
+hold on;
+plot(t, v_filt, 'b-', 'LineWidth', 1.5);
+xlabel('Temps (s)');
+ylabel('Vitesse (km/h)');
+title('Vitesse — brut vs filtré');
+legend('Brut', 'Filtré 10Hz');
+grid on;
+
+% Accélération latérale
+subplot(3,1,2);
+plot(t, ay_raw,  'Color', [0.9 0.7 0.7], 'LineWidth', 0.5);
+hold on;
+plot(t, ay_filt, 'r-', 'LineWidth', 1.5);
+xlabel('Temps (s)');
+ylabel('Accélération latérale (g)');
+title('Accélération latérale — brut vs filtré');
+legend('Brut', 'Filtré');
+grid on;
+
+% Carte G-G
+subplot(3,1,3);
+scatter(ay_filt, zeros(1,N), 3, v_filt, 'filled');
+xlabel('Ay (g)');
+ylabel('Ax (g)');
+title('Carte G-G');
+colorbar;
+clim([0 max(v_filt)]);
+grid on;
